@@ -57,6 +57,29 @@ def calculate_voltage_divider(vin_str, r1_str, r2_str):
     Vout = Vin * (R2 / (R1 + R2))
     return f"Output Voltage ($V_{{out}}$) = {Vout:.3f} V"
 
+def calculate_parallel_resistance(resistors_str):
+    """
+    Calculates the total resistance for resistors in parallel.
+    Takes a comma-separated string of resistor values.
+    """
+    resistors = [r.strip() for r in resistors_str.split(',')]
+    if not all(r for r in resistors):
+        return "Please enter at least two resistor values."
+    
+    try:
+        # Convert string values to floats
+        resistor_values = [float(r) for r in resistors]
+        if any(r <= 0 for r in resistor_values):
+            return "Resistor values must be greater than zero."
+        
+        # Calculate the sum of reciprocals
+        reciprocal_sum = sum(1/r for r in resistor_values)
+        
+        # Calculate the total resistance
+        total_resistance = 1 / reciprocal_sum
+        return f"Total Resistance ($R_{{total}}$) = {total_resistance:.3f} Ω"
+    except ValueError:
+        return "Invalid input. Please enter a comma-separated list of numbers."
 
 # --- GUI Creator Functions for Each Calculator ---
 
@@ -162,6 +185,42 @@ def create_voltage_divider_gui(parent_frame):
     result_label.pack(pady=20)
 
 
+def create_parallel_resistance_gui(parent_frame):
+    """
+    Creates and populates the GUI for the Parallel Resistance calculator.
+    """
+    # Clear the parent frame
+    for widget in parent_frame.winfo_children():
+        widget.destroy()
+
+    # Title
+    ctk.CTkLabel(parent_frame, text="Parallel Resistance", font=ctk.CTkFont(size=24, weight="bold")).pack(pady=10)
+    ctk.CTkLabel(parent_frame, text="Enter a comma-separated list of resistor values ($R_1, R_2, ...$)", text_color="gray").pack(pady=(0, 20))
+    
+    resistors_var = StringVar(value="")
+    result_var = StringVar(value="")
+
+    # Input frame
+    input_frame = ctk.CTkFrame(parent_frame, fg_color="transparent")
+    input_frame.pack(pady=10)
+
+    # Input field for resistor values
+    ctk.CTkLabel(input_frame, text="Resistor Values (Ω):").grid(row=0, column=0, sticky=W, padx=10, pady=5)
+    ctk.CTkEntry(input_frame, textvariable=resistors_var, width=300).grid(row=0, column=1, padx=10, pady=5)
+
+    # Function to update the result
+    def update_result(*args):
+        result = calculate_parallel_resistance(resistors_var.get())
+        result_var.set(result)
+
+    # Trace the input variable
+    resistors_var.trace_add("write", update_result)
+    
+    # Result label
+    result_label = ctk.CTkLabel(parent_frame, textvariable=result_var, font=ctk.CTkFont(size=18, weight="bold"))
+    result_label.pack(pady=20)
+
+
 # --- Application Class ---
 
 class App(ctk.CTk):
@@ -192,6 +251,7 @@ class App(ctk.CTk):
         self.CALCULATORS = {
             "Ohm's Law": create_ohms_law_gui,
             "Voltage Divider": create_voltage_divider_gui,
+            "Parallel Resistance": create_parallel_resistance_gui,
             # To add a new calculator, just add a new entry here:
             # "New Calculator": create_new_calculator_gui_function,
         }
